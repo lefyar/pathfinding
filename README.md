@@ -57,5 +57,3 @@ Inspired by Dijkstra's shortest path algorithm and the A* search algorithm by Ha
 
 - Dijkstra paper: https://doi.org/10.1007/BF01386390
 - A* paper: https://doi.org/10.1109/TSSC.1968.300136
-
-Created by [Lefyar](https://www.lefyar.dev/).
