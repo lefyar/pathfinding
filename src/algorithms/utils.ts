@@ -20,6 +20,9 @@ export const getNeighbors = (grid: Grid, position: Position): Position[] => {
     });
 };
 
+export const getNodeCost = (grid: Grid, position: Position) =>
+  grid[position.row]?.[position.col]?.weight ?? 1;
+
 export const reconstructPath = (
   previous: Map<string, Position>,
   start: Position,

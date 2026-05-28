@@ -8,11 +8,13 @@ The app lets you draw walls, move the start and target nodes, generate a random 
 
 - Interactive 20 x 30 grid
 - Drag to add or remove walls
+- Paint weighted terrain for Dijkstra and A*
 - Moveable start and target nodes
 - Animated traversal and final path rendering
+- Step-by-step mode for classroom-style inspection
 - Dijkstra, A*, BFS, and DFS implementations
 - Visualization speed controls
-- Clear path, clear walls, and random maze actions
+- Clear path, clear walls, clear weights, and recursive division maze actions
 - Run statistics for visited nodes, path length, and execution time
 - Dark minimalist UI with responsive mobile layout
 
@@ -24,6 +26,8 @@ Algorithm implementations live in `src/algorithms`:
 - A* search with Manhattan-distance heuristic
 - Breadth-First Search
 - Depth-First Search
+
+Dijkstra and A* account for weighted terrain. BFS and DFS intentionally ignore weights so learners can compare unweighted and weighted search behavior.
 
 Grid state and interaction helpers live in `src/grid`.
 

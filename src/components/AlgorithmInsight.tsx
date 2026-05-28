@@ -15,7 +15,7 @@ const insights: Record<
   dijkstra: {
     label: "Dijkstra",
     summary:
-      "Expands the lowest known-cost frontier first. On this unweighted grid it behaves like BFS, but it generalizes cleanly to weighted maps.",
+      "Expands the lowest known-cost frontier first. Weighted cells cost more, so it can route around expensive terrain even when the path has more steps.",
     traits: ["Shortest path", "Non-negative weights", "Systematic frontier"],
   },
   astar: {
@@ -27,8 +27,8 @@ const insights: Record<
   bfs: {
     label: "Breadth-First Search",
     summary:
-      "Visits cells in waves from the start node. With equal edge costs, the first target discovery is guaranteed shortest.",
-    traits: ["Shortest path", "Unweighted graph", "Layer by layer"],
+      "Visits cells in waves from the start node. It finds the fewest steps in an unweighted grid, but it ignores weighted terrain costs.",
+    traits: ["Fewest steps", "Ignores weights", "Layer by layer"],
   },
   dfs: {
     label: "Depth-First Search",

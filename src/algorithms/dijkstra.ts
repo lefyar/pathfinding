@@ -1,6 +1,6 @@
 import type { Grid, Position, SearchResult } from "../types";
 import { nodeId, samePosition } from "../grid/grid";
-import { getNeighbors, reconstructPath } from "./utils";
+import { getNeighbors, getNodeCost, reconstructPath } from "./utils";
 
 export const dijkstra = (grid: Grid, start: Position, target: Position): SearchResult => {
   const startedAt = performance.now();
@@ -36,7 +36,7 @@ export const dijkstra = (grid: Grid, start: Position, target: Position): SearchR
 
     for (const neighbor of getNeighbors(grid, current)) {
       const key = nodeId(neighbor);
-      const distance = currentDistance + 1;
+      const distance = currentDistance + getNodeCost(grid, neighbor);
 
       if (distance < (distances.get(key) ?? Infinity)) {
         distances.set(key, distance);

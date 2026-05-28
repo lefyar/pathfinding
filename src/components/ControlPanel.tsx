@@ -1,29 +1,37 @@
-import { ChevronDown, Eraser, Play, RotateCcw, Sparkles } from "lucide-react";
+import { ChevronDown, Eraser, Footprints, Play, RotateCcw, Sparkles } from "lucide-react";
 import { speedLabels, type SpeedKey } from "../animation";
-import type { AlgorithmKey } from "../types";
+import type { AlgorithmKey, PaintTool } from "../types";
 import { algorithmLabels } from "../algorithms";
 
 type ControlPanelProps = {
   algorithm: AlgorithmKey;
+  paintTool: PaintTool;
   speed: SpeedKey;
   isVisualizing: boolean;
   onAlgorithmChange: (algorithm: AlgorithmKey) => void;
+  onPaintToolChange: (tool: PaintTool) => void;
   onSpeedChange: (speed: SpeedKey) => void;
   onStart: () => void;
+  onStep: () => void;
   onClearPath: () => void;
   onClearWalls: () => void;
+  onClearWeights: () => void;
   onGenerateMaze: () => void;
 };
 
 export function ControlPanel({
   algorithm,
+  paintTool,
   speed,
   isVisualizing,
   onAlgorithmChange,
+  onPaintToolChange,
   onSpeedChange,
   onStart,
+  onStep,
   onClearPath,
   onClearWalls,
+  onClearWeights,
   onGenerateMaze,
 }: ControlPanelProps) {
   return (
@@ -52,6 +60,28 @@ export function ControlPanel({
       </label>
 
       <label className="field">
+        <span>Paint tool</span>
+        <span className="segmented-control">
+          <button
+            className={paintTool === "wall" ? "active" : ""}
+            type="button"
+            disabled={isVisualizing}
+            onClick={() => onPaintToolChange("wall")}
+          >
+            Wall
+          </button>
+          <button
+            className={paintTool === "weight" ? "active" : ""}
+            type="button"
+            disabled={isVisualizing}
+            onClick={() => onPaintToolChange("weight")}
+          >
+            Weight
+          </button>
+        </span>
+      </label>
+
+      <label className="field">
         <span>Speed</span>
         <span className="select-shell">
           <select
@@ -74,6 +104,10 @@ export function ControlPanel({
           <Play size={18} aria-hidden="true" />
           <span>Start</span>
         </button>
+        <button type="button" disabled={isVisualizing} onClick={onStep} title="Step through the visualization">
+          <Footprints size={18} aria-hidden="true" />
+          <span>Step</span>
+        </button>
         <button type="button" disabled={isVisualizing} onClick={onClearPath} title="Clear path">
           <RotateCcw size={18} aria-hidden="true" />
           <span>Clear path</span>
@@ -82,9 +116,13 @@ export function ControlPanel({
           <Eraser size={18} aria-hidden="true" />
           <span>Clear walls</span>
         </button>
-        <button type="button" disabled={isVisualizing} onClick={onGenerateMaze} title="Generate random maze">
+        <button type="button" disabled={isVisualizing} onClick={onClearWeights} title="Clear weighted nodes">
+          <Eraser size={18} aria-hidden="true" />
+          <span>Clear weights</span>
+        </button>
+        <button type="button" disabled={isVisualizing} onClick={onGenerateMaze} title="Generate recursive division maze">
           <Sparkles size={18} aria-hidden="true" />
-          <span>Random maze</span>
+          <span>Maze</span>
         </button>
       </div>
     </section>

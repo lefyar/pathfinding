@@ -7,23 +7,33 @@ import { GridBoard } from "./components/GridBoard";
 import { StatsBar } from "./components/StatsBar";
 import {
   clearPathStates,
+  clearWeights,
   clearWalls,
   createGrid,
   DEFAULT_START,
   DEFAULT_TARGET,
   findNodeByKind,
-  generateRandomMaze,
+  generateRecursiveDivisionMaze,
   moveSpecialNode,
   setNodeVisualState,
+  setWeight,
   setWall,
 } from "./grid/grid";
-import type { AlgorithmKey, GridNode, Position, SearchStats } from "./types";
+import type { AlgorithmKey, GridNode, PaintTool, Position, SearchResult, SearchStats } from "./types";
 
 type DragMode =
   | { type: "none" }
   | { type: "wall"; makeWall: boolean }
+  | { type: "weight"; makeWeight: boolean }
   | { type: "move-start" }
   | { type: "move-target" };
+
+type StepSearch = SearchResult & {
+  visitedIndex: number;
+  pathIndex: number;
+  start: Position;
+  target: Position;
+};
 
 const emptyStats: SearchStats = {
   visitedNodes: 0,
@@ -41,13 +51,18 @@ export default function App() {
   const [start, setStart] = useState<Position>(DEFAULT_START);
   const [target, setTarget] = useState<Position>(DEFAULT_TARGET);
   const [algorithm, setAlgorithm] = useState<AlgorithmKey>("dijkstra");
+  const [paintTool, setPaintTool] = useState<PaintTool>("wall");
   const [speed, setSpeed] = useState<SpeedKey>("normal");
   const [stats, setStats] = useState<SearchStats>(emptyStats);
   const [isVisualizing, setIsVisualizing] = useState(false);
+  const [stepSearch, setStepSearch] = useState<StepSearch | null>(null);
   const dragMode = useRef<DragMode>({ type: "none" });
   const animationRun = useRef(0);
 
-  const resetStats = () => setStats(emptyStats);
+  const resetStats = () => {
+    setStats(emptyStats);
+    setStepSearch(null);
+  };
 
   const stopAnimationAndClearPath = () => {
     animationRun.current += 1;
@@ -69,9 +84,18 @@ export default function App() {
       return;
     }
 
+    if (paintTool === "weight") {
+      const makeWeight = node.weight === 1;
+      dragMode.current = { type: "weight", makeWeight };
+      setGrid((current) => setWeight(current, node, makeWeight));
+      resetStats();
+      return;
+    }
+
     const makeWall = node.kind !== "wall";
     dragMode.current = { type: "wall", makeWall };
     setGrid((current) => setWall(current, node, makeWall));
+    resetStats();
   };
 
   const handlePointerEnter = (node: GridNode) => {
@@ -79,6 +103,14 @@ export default function App() {
 
     if (dragMode.current.type === "wall") {
       setGrid((current) => setWall(current, node, dragMode.current.type === "wall" && dragMode.current.makeWall));
+      resetStats();
+      return;
+    }
+
+    if (dragMode.current.type === "weight") {
+      setGrid((current) =>
+        setWeight(current, node, dragMode.current.type === "weight" && dragMode.current.makeWeight),
+      );
       resetStats();
       return;
     }
@@ -106,6 +138,7 @@ export default function App() {
     animationRun.current = runId;
     dragMode.current = { type: "none" };
     setIsVisualizing(true);
+    setStepSearch(null);
 
     const cleanGrid = clearPathStates(grid);
     setGrid(cleanGrid);
@@ -136,6 +169,56 @@ export default function App() {
     setIsVisualizing(false);
   };
 
+  const createStepSearch = (): StepSearch => {
+    const cleanGrid = clearPathStates(grid);
+    setGrid(cleanGrid);
+    const currentStart = findNodeByKind(cleanGrid, "start");
+    const currentTarget = findNodeByKind(cleanGrid, "target");
+    const result = runAlgorithm(algorithm, cleanGrid, currentStart, currentTarget);
+
+    return {
+      ...result,
+      visitedIndex: 0,
+      pathIndex: 0,
+      start: currentStart,
+      target: currentTarget,
+    };
+  };
+
+  const handleStep = () => {
+    const current = stepSearch ?? createStepSearch();
+
+    if (current.visitedIndex < current.visitedOrder.length) {
+      const node = current.visitedOrder[current.visitedIndex];
+      const next = { ...current, visitedIndex: current.visitedIndex + 1 };
+      setGrid((activeGrid) => setNodeVisualState(activeGrid, node, "visited"));
+      setStats({
+        visitedNodes: next.visitedIndex,
+        pathLength: 0,
+        executionTime: current.executionTime,
+      });
+      setStepSearch(next);
+      return;
+    }
+
+    if (current.pathIndex < current.path.length) {
+      const node = current.path[current.pathIndex];
+      const next = { ...current, pathIndex: current.pathIndex + 1 };
+      setGrid((activeGrid) => setNodeVisualState(activeGrid, node, "path"));
+      setStats({
+        visitedNodes: current.visitedOrder.length,
+        pathLength: Math.max(0, next.pathIndex - 1),
+        executionTime: current.executionTime,
+      });
+      setStepSearch(next);
+      setStart(current.start);
+      setTarget(current.target);
+      return;
+    }
+
+    setStepSearch(null);
+  };
+
   const handleClearWalls = () => {
     animationRun.current += 1;
     setIsVisualizing(false);
@@ -143,10 +226,17 @@ export default function App() {
     resetStats();
   };
 
+  const handleClearWeights = () => {
+    animationRun.current += 1;
+    setIsVisualizing(false);
+    setGrid((current) => clearWeights(current));
+    resetStats();
+  };
+
   const handleGenerateMaze = () => {
     animationRun.current += 1;
     setIsVisualizing(false);
-    setGrid((current) => generateRandomMaze(current, start, target));
+    setGrid((current) => generateRecursiveDivisionMaze(current, start, target));
     resetStats();
   };
 
@@ -167,13 +257,17 @@ export default function App() {
         <aside className="sidebar" aria-label="Pathfinding workspace controls">
           <ControlPanel
             algorithm={algorithm}
+            paintTool={paintTool}
             speed={speed}
             isVisualizing={isVisualizing}
             onAlgorithmChange={setAlgorithm}
+            onPaintToolChange={setPaintTool}
             onSpeedChange={setSpeed}
             onStart={animateSearch}
+            onStep={handleStep}
             onClearPath={stopAnimationAndClearPath}
             onClearWalls={handleClearWalls}
+            onClearWeights={handleClearWeights}
             onGenerateMaze={handleGenerateMaze}
           />
 
@@ -192,6 +286,7 @@ export default function App() {
               <span className="legend-item start-key">Start</span>
               <span className="legend-item target-key">Target</span>
               <span className="legend-item wall-key">Wall</span>
+              <span className="legend-item weight-key">Weight</span>
               <span className="legend-item visited-key">Visited</span>
               <span className="legend-item path-key">Path</span>
             </div>

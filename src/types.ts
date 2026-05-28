@@ -2,6 +2,8 @@ export type AlgorithmKey = "dijkstra" | "astar" | "bfs" | "dfs";
 
 export type NodeKind = "empty" | "wall" | "start" | "target";
 
+export type PaintTool = "wall" | "weight";
+
 export type NodeVisualState = "idle" | "visited" | "path";
 
 export type Position = {
@@ -12,6 +14,7 @@ export type Position = {
 export type GridNode = Position & {
   id: string;
   kind: NodeKind;
+  weight: number;
   visualState: NodeVisualState;
 };
 

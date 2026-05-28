@@ -29,6 +29,7 @@ export const createGrid = (
       col,
       id: nodeId({ row, col }),
       kind: getKind({ row, col }, start, target),
+      weight: 1,
       visualState: "idle",
     })),
   );
@@ -49,6 +50,14 @@ export const clearWalls = (grid: Grid): Grid =>
     row.map((node) => ({
       ...node,
       kind: node.kind === "wall" ? "empty" : node.kind,
+    })),
+  );
+
+export const clearWeights = (grid: Grid): Grid =>
+  clearPathStates(grid).map((row) =>
+    row.map((node) => ({
+      ...node,
+      weight: 1,
     })),
   );
 
@@ -76,6 +85,21 @@ export const setWall = (grid: Grid, position: Position, shouldBeWall: boolean): 
     }),
   );
 
+export const setWeight = (grid: Grid, position: Position, shouldBeWeighted: boolean): Grid =>
+  clearPathStates(grid).map((row) =>
+    row.map((node) => {
+      if (!samePosition(node, position) || node.kind === "start" || node.kind === "target") {
+        return node;
+      }
+
+      return {
+        ...node,
+        kind: node.kind === "wall" ? "empty" : node.kind,
+        weight: shouldBeWeighted ? 5 : 1,
+      };
+    }),
+  );
+
 export const moveSpecialNode = (
   grid: Grid,
   from: Position,
@@ -90,8 +114,8 @@ export const moveSpecialNode = (
 
   return clearPathStates(grid).map((row) =>
     row.map((node) => {
-      if (samePosition(node, from)) return { ...node, kind: "empty" };
-      if (samePosition(node, to)) return { ...node, kind };
+      if (samePosition(node, from)) return { ...node, kind: "empty", weight: 1 };
+      if (samePosition(node, to)) return { ...node, kind, weight: 1 };
       return node;
     }),
   );
@@ -107,9 +131,70 @@ export const generateRandomMaze = (
     row.map((node) => {
       if (samePosition(node, start)) return { ...node, kind: "start" };
       if (samePosition(node, target)) return { ...node, kind: "target" };
-      return { ...node, kind: Math.random() < density ? "wall" : "empty" };
+      return { ...node, kind: Math.random() < density ? "wall" : "empty", weight: 1 };
     }),
   );
+
+export const generateRecursiveDivisionMaze = (
+  grid: Grid,
+  start: Position,
+  target: Position,
+): Grid => {
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+  const walls = new Set<string>();
+
+  const divide = (
+    top: number,
+    bottom: number,
+    left: number,
+    right: number,
+    orientation: "horizontal" | "vertical",
+  ) => {
+    if (bottom - top < 2 || right - left < 2) return;
+
+    if (orientation === "horizontal") {
+      const possibleRows = [];
+      for (let row = top + 1; row < bottom; row += 2) possibleRows.push(row);
+      const wallRow = possibleRows[Math.floor(Math.random() * possibleRows.length)];
+      const passageCols = [];
+      for (let col = left; col <= right; col += 2) passageCols.push(col);
+      const passageCol = passageCols[Math.floor(Math.random() * passageCols.length)];
+
+      for (let col = left; col <= right; col += 1) {
+        if (col !== passageCol) walls.add(nodeId({ row: wallRow, col }));
+      }
+
+      divide(top, wallRow - 1, left, right, "vertical");
+      divide(wallRow + 1, bottom, left, right, "vertical");
+      return;
+    }
+
+    const possibleCols = [];
+    for (let col = left + 1; col < right; col += 2) possibleCols.push(col);
+    const wallCol = possibleCols[Math.floor(Math.random() * possibleCols.length)];
+    const passageRows = [];
+    for (let row = top; row <= bottom; row += 2) passageRows.push(row);
+    const passageRow = passageRows[Math.floor(Math.random() * passageRows.length)];
+
+    for (let row = top; row <= bottom; row += 1) {
+      if (row !== passageRow) walls.add(nodeId({ row, col: wallCol }));
+    }
+
+    divide(top, bottom, left, wallCol - 1, "horizontal");
+    divide(top, bottom, wallCol + 1, right, "horizontal");
+  };
+
+  divide(0, rows - 1, 0, cols - 1, cols > rows ? "vertical" : "horizontal");
+
+  return clearPathStates(grid).map((row) =>
+    row.map((node) => {
+      if (samePosition(node, start)) return { ...node, kind: "start", weight: 1 };
+      if (samePosition(node, target)) return { ...node, kind: "target", weight: 1 };
+      return { ...node, kind: walls.has(node.id) ? "wall" : "empty", weight: 1 };
+    }),
+  );
+};
 
 export const findNodeByKind = (
   grid: Grid,

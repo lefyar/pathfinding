@@ -1,6 +1,6 @@
 import type { Grid, Position, SearchResult } from "../types";
 import { nodeId, samePosition } from "../grid/grid";
-import { getNeighbors, manhattanDistance, reconstructPath } from "./utils";
+import { getNeighbors, getNodeCost, manhattanDistance, reconstructPath } from "./utils";
 
 export const astar = (grid: Grid, start: Position, target: Position): SearchResult => {
   const startedAt = performance.now();
@@ -29,7 +29,7 @@ export const astar = (grid: Grid, start: Position, target: Position): SearchResu
       const neighborKey = nodeId(neighbor);
       if (closedKeys.has(neighborKey)) continue;
 
-      const tentativeGScore = (gScore.get(currentKey) ?? Infinity) + 1;
+      const tentativeGScore = (gScore.get(currentKey) ?? Infinity) + getNodeCost(grid, neighbor);
       if (tentativeGScore >= (gScore.get(neighborKey) ?? Infinity)) continue;
 
       previous.set(neighborKey, current);

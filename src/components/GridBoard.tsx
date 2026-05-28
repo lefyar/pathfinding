@@ -31,7 +31,7 @@ export function GridBoard({
             key={node.id}
             type="button"
             disabled={isVisualizing}
-            className={`grid-node ${node.kind} ${node.visualState}`}
+            className={`grid-node ${node.kind} ${node.weight > 1 ? "weighted" : ""} ${node.visualState}`}
             aria-label={`${node.kind} node at row ${node.row + 1}, column ${node.col + 1}`}
             onPointerDown={() => onPointerDown(node)}
             onPointerEnter={() => onPointerEnter(node)}
