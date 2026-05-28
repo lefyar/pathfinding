@@ -254,7 +254,7 @@ export default function App() {
       </header>
 
       <div className="workspace">
-        <aside className="sidebar" aria-label="Pathfinding workspace controls">
+        <div className="controls-column">
           <ControlPanel
             algorithm={algorithm}
             paintTool={paintTool}
@@ -270,11 +270,7 @@ export default function App() {
             onClearWeights={handleClearWeights}
             onGenerateMaze={handleGenerateMaze}
           />
-
-          <StatsBar stats={stats} />
-
-          <AlgorithmInsight algorithm={algorithm} />
-        </aside>
+        </div>
 
         <section className="board-area">
           <div className="board-header">
@@ -300,6 +296,12 @@ export default function App() {
             onPointerUp={handlePointerUp}
           />
         </section>
+
+        <aside className="info-column" aria-label="Pathfinding run details">
+          <StatsBar stats={stats} />
+
+          <AlgorithmInsight algorithm={algorithm} />
+        </aside>
       </div>
 
       <footer>
